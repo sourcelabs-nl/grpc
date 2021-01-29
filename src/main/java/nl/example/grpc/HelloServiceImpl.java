@@ -13,21 +13,14 @@ public class HelloServiceImpl extends HelloServiceGrpc.HelloServiceImplBase {
 
         responseObserver.onNext(response);
 
-        if(request.getFirstName().equals("Rick")) {
+        if (request.getFirstName().equals("Rick")) {
             Status status = Status.INVALID_ARGUMENT.withDescription("Deze naam bestaat niet");
             responseObserver.onError(status.asRuntimeException());
-        }
-
-        if(request.getFirstName().equals("Francois")) {
+        } else if (request.getFirstName().equals("Francois")) {
             responseObserver.onError(new ClassNotFoundException());
-        }
-
-        if(request.getFirstName().equals("Daniel")) {
-            Status status = Status.NOT_FOUND.withDescription("Deze naam bestaat niet");
-            throw status.asRuntimeException();
-        }
-
-        if(request.getFirstName().equals("Long")) {
+        } else if (request.getFirstName().equals("Daniel")) {
+            responseObserver.onError(new IllegalArgumentException("Daniel zijn account is blocked"));
+        } else if (request.getFirstName().equals("Long")) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -35,9 +28,9 @@ public class HelloServiceImpl extends HelloServiceGrpc.HelloServiceImplBase {
             }
             Status status = Status.NOT_FOUND.withDescription("Super lange request");
             responseObserver.onError(status.asRuntimeException());
+        } else {
+            responseObserver.onCompleted();
         }
-
-        responseObserver.onCompleted();
 
     }
 

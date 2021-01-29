@@ -9,14 +9,20 @@ import java.util.concurrent.TimeUnit;
 
 public class Client {
     public static void main(String[] args) {
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 8080).usePlaintext().build();
-        HelloServiceGrpc.HelloServiceBlockingStub stub = HelloServiceGrpc.newBlockingStub(channel)
-                .withDeadlineAfter(500, TimeUnit.MILLISECONDS);
+        ManagedChannel channel = ManagedChannelBuilder
+            .forAddress("localhost", 8080)
+            .usePlaintext()
+            .build();
+
+        HelloServiceGrpc.HelloServiceBlockingStub stub = HelloServiceGrpc
+            .newBlockingStub(channel)
+//            .withDeadlineAfter(1200, TimeUnit.MILLISECONDS)
+            .withCallCredentials(new SlabsCredentials());
 
         doCallHello(stub, "Rick");
         doCallHello(stub, "Francois");
         doCallHello(stub, "Daniel");
-        doCallHello(stub, "Long");
+//        doCallHello(stub, "Long");
 
         CountDownLatch latch = new CountDownLatch(1);
         StreamObserver observer = new StreamObserver<HelloResponse>() {
@@ -27,15 +33,21 @@ public class Client {
             }
 
             @Override
-            public void onError(Throwable t) {}
+            public void onError(Throwable t) {
+                System.out.println(t);
+            }
 
             @Override
             public void onCompleted() {
+                System.out.println("completed");
                 latch.countDown();
             }
         };
 
-        HelloServiceGrpc.HelloServiceStub streamStub = HelloServiceGrpc.newStub(channel);
+        HelloServiceGrpc.HelloServiceStub streamStub = HelloServiceGrpc
+            .newStub(channel)
+            .withCallCredentials(new SlabsCredentials());
+
         streamStub.hellostream(HelloRequest.newBuilder().setFirstName("Jarno").setLastName("Walgemoed").build(), observer);
 
         try {
@@ -50,6 +62,7 @@ public class Client {
     private static void doCallHello(HelloServiceGrpc.HelloServiceBlockingStub stub, String aLong) {
         try {
             HelloResponse response = stub.hello(HelloRequest.newBuilder().setFirstName(aLong).setLastName("Walgemoed").build());
+            System.out.println(response);
         } catch (Exception ex) {
             System.out.println(ex);
         }
