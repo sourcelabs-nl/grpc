@@ -1,3 +1,5 @@
+import java.util.concurrent.TimeUnit;
+
 import nl.example.gps.TripResponseStreamObserver;
 
 import org.junit.After;
@@ -22,11 +24,11 @@ public class BiDirectionalStreamingTest {
         this.channel = ManagedChannelBuilder.forAddress("localhost", 8080)
                 .usePlaintext()
                 .build();
-        this.clientStub = NavigationServiceGrpc.newStub(channel);
+        this.clientStub = NavigationServiceGrpc.newStub(channel).withDeadlineAfter(5, TimeUnit.MINUTES);
     }
 
     @After
-    public void teardown() {
+    public void teardown() throws InterruptedException {
         this.channel.shutdown();
     }
 
@@ -35,6 +37,7 @@ public class BiDirectionalStreamingTest {
         TripResponseStreamObserver tripResponseStreamObserver = new TripResponseStreamObserver();
         StreamObserver<TripRequest> requestStreamObserver = this.clientStub.navigate(tripResponseStreamObserver);
         tripResponseStreamObserver.startTrip(requestStreamObserver);
+        tripResponseStreamObserver.getCountDownLatch().await();
     }
 
 }

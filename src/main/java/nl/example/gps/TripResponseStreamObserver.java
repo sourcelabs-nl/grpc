@@ -1,6 +1,7 @@
 package nl.example.gps;
 
 import java.time.LocalTime;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
@@ -13,6 +14,12 @@ import io.grpc.stub.StreamObserver;
 public class TripResponseStreamObserver implements StreamObserver<TripResponse> {
 
     private StreamObserver<TripRequest> requestStreamObserver;
+
+    private CountDownLatch countDownLatch = new CountDownLatch(1);
+
+    public CountDownLatch getCountDownLatch() {
+        return countDownLatch;
+    }
 
     @Override
     public void onNext(TripResponse tripResponse) {
@@ -32,6 +39,7 @@ public class TripResponseStreamObserver implements StreamObserver<TripResponse> 
     @Override
     public void onCompleted() {
         System.out.println("Trip Completed");
+        countDownLatch.countDown();
     }
 
     public void startTrip(StreamObserver<TripRequest> requestStreamObserver){
