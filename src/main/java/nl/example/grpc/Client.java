@@ -5,12 +5,18 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class Client {
     public static void main(String[] args) {
         ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 8080).usePlaintext().build();
-        HelloServiceGrpc.HelloServiceBlockingStub stub = HelloServiceGrpc.newBlockingStub(channel);
-        HelloResponse response = stub.hello(HelloRequest.newBuilder().setFirstName("Jarno").setLastName("Walgemoed").build());
+        HelloServiceGrpc.HelloServiceBlockingStub stub = HelloServiceGrpc.newBlockingStub(channel)
+                .withDeadlineAfter(500, TimeUnit.MILLISECONDS);
+
+        doCallHello(stub, "Rick");
+        doCallHello(stub, "Francois");
+        doCallHello(stub, "Daniel");
+        doCallHello(stub, "Long");
 
         CountDownLatch latch = new CountDownLatch(1);
         StreamObserver observer = new StreamObserver<HelloResponse>() {
@@ -21,9 +27,7 @@ public class Client {
             }
 
             @Override
-            public void onError(Throwable t) {
-
-            }
+            public void onError(Throwable t) {}
 
             @Override
             public void onCompleted() {
@@ -41,5 +45,13 @@ public class Client {
         }
         channel.shutdown();
 
+    }
+
+    private static void doCallHello(HelloServiceGrpc.HelloServiceBlockingStub stub, String aLong) {
+        try {
+            HelloResponse response = stub.hello(HelloRequest.newBuilder().setFirstName(aLong).setLastName("Walgemoed").build());
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
     }
 }
